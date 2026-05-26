@@ -4,9 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui webkitwidgets printsupport webview
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui webenginewidgets printsupport widgets
 
 TARGET = Minimal_Browser
 TEMPLATE = app

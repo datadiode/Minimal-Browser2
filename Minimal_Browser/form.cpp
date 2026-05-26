@@ -3,44 +3,37 @@
 #include <QFileDialog>
 #include <QKeyEvent>
 #include <QString>
-#include <QWebView>
+#include <QWebEngineView>
+#include <QWebEnginePage>
+#include <QWebEngineSettings>
 #include <QtWidgets>
 #include <QUrl>
 #include <QtPrintSupport>
 #include <QPrintDialog>
 #include <QPrinter>
 #include <QPageLayout>
-#include <QWebInspector>
 #include <QCoreApplication>
 #include <QProcess>
+
 Form::Form(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Form)
 {
     ui->setupUi(this);
 
-//Basic page downloading.
-        ui->webView->page()->setForwardUnsupportedContent(true);
-        ui->webView->load(QUrl("https://duckduckgo.com/"));
+    on_home_clicked();
 
-//Delegate links to new webview
-ui->webView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-
-//Settings
-        ui->webView->page()->settings()->setAttribute(QWebSettings::JavascriptEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::PluginsEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::PrivateBrowsingEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::SpatialNavigationEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::PrivateBrowsingEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::Accelerated2dCanvasEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::AcceleratedCompositingEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::AutoLoadImages,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::ScrollAnimatorEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::FullScreenSupportEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::WebGLEnabled,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows,true);
-        ui->webView->page()->settings()->setAttribute(QWebSettings::LocalContentCanAccessRemoteUrls, true);
+    //Settings
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::JavascriptEnabled,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::PluginsEnabled,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::SpatialNavigationEnabled,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::Accelerated2dCanvasEnabled,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::AutoLoadImages,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::ScrollAnimatorEnabled,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::WebGLEnabled,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows,true);
+    ui->webView->page()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
 }
 
 Form::~Form()
@@ -50,32 +43,19 @@ Form::~Form()
 
 void Form::on_addressbar_returnPressed()
 {
-
-        QString x;
-        x=ui->addressbar->text();
-
-        QString y;
-        y="https://";
-
-        QString z;
-        z="www.";
-
-        QString o;
-        o="";
-
-        QString search;
-        search="search:";
-        QString searching;
-        searching=ui->addressbar->text();
-// Search engine
-        QString engine="https://duckduckgo.com/?q=" + searching;
-
-
-        if(ui->addressbar->text().startsWith(o)){ui->webView->load(QUrl(y+x));
-            ui->addressbar->setText(x);}
-
-        if(ui->addressbar->text().startsWith(search)){ui->webView->load(QUrl(engine));}
-
+    QUrl url = ui->addressbar->text();
+    QString part = url.scheme();
+    url.setScheme("https");
+    if (part == "search")
+    {
+        url.setHost("duckduckgo.com");
+        part = url.path();
+        url.setPath("/");
+        QUrlQuery query;
+        query.addQueryItem("q", part);
+        url.setQuery(query);
+    }
+    ui->webView->load(url);
 }
 
 void Form::on_back_clicked()
@@ -103,7 +83,7 @@ void Form::on_print_clicked()
 {
     QPrinter printer;
     QPrintDialog dialog(&printer, this);
-    if(dialog.exec() != QDialog::Accepted) return;
+    if (dialog.exec() != QDialog::Accepted) return;
     ui->webView->print(&printer);
 }
 
@@ -120,8 +100,8 @@ void Form::on_download_clicked()
     QString urls= ui->webView->url().toString();
     QString filename;
     filename = QFileDialog::getSaveFileName(this, tr("Save File"),
-                                                "",
-                                                tr("All files (*"));
+                                            "",
+                                            tr("All files (*"));
 
     QString getme=ui->webView->url().toString();
     QProcess proc;
@@ -130,9 +110,9 @@ void Form::on_download_clicked()
     args << "-O";
     args << filename;
 
-   proc.start("wget", args);
-        proc.waitForFinished();
-        qDebug() << proc.readAllStandardOutput();
+    proc.start("wget", args);
+    proc.waitForFinished();
+    qDebug() << proc.readAllStandardOutput();
 }
 
 void Form::on_zoomplus_clicked()
@@ -142,19 +122,19 @@ void Form::on_zoomplus_clicked()
 
 void Form::on_zoominus_clicked()
 {
-     ui->webView->setZoomFactor(ui->webView->zoomFactor()-.2);
+    ui->webView->setZoomFactor(ui->webView->zoomFactor()-.2);
 }
-
 
 void Form::on_home_clicked()
 {
-     ui->webView->load(QUrl("https://duckduckgo.com/"));
-     ui->addressbar->setText(ui->webView->url().toString());
+    ui->webView->load(QUrl("https://duckduckgo.com/"));
+    ui->addressbar->setText(ui->webView->url().toString());
 }
 
 void Form::on_webView_loadFinished(bool arg1)
 {
-    if (arg1){
-        ui->addressbar->setText(ui->webView->url().toString());}
-
+    if (arg1)
+    {
+        ui->addressbar->setText(ui->webView->url().toString());
+    }
 }
