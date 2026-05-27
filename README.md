@@ -1,20 +1,18 @@
 # Minimal-Browser2
 Next version of Minimal Browser C++
 
-<b> Current version is 2.5 Beta. Notice that this version might contain bugs.</b>
+<b>Current version is 2.5 Beta. Notice that this version might contain bugs.</b>
 
 Copyright (c) 2020 JJ Posti <techtimejourney.net>
 
 This is free software, and you are welcome to redistribute it under GPL Version 3 or Apache v2 license.
 
+<b>Dual licensing model abandoned:</b>
 
-<b>Licensing Dual licensing model:</b> 
+This fork abandons the upstream's dual licensing model in favor of the Apache v2 license option.  
+The reason is Apache v2 plays nice with GPL v3 and that cancels the effect of dual licensing.
 
-GPL v2 is upgraded to GPL v3.
-Also adding Apache v2 license as an alternative possibility if GPL v3 is not desired.
-
-
-![browser](https://user-images.githubusercontent.com/29865797/178351588-e53b7b0d-bd46-4806-95d0-a1f9527658a5.jpg)
+![browser](https://github.com/user-attachments/assets/4be6ba0a-8680-4d79-a59f-68d65e1e64a9)
 
 Features added by v2.5 beta
 
