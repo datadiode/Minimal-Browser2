@@ -21,8 +21,6 @@ Form::Form(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    on_home_clicked();
-
     //Settings
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::JavascriptEnabled,true);
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::PluginsEnabled,true);
@@ -34,6 +32,15 @@ Form::Form(QWidget *parent) :
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::WebGLEnabled,true);
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows,true);
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
+
+    ui->back->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
+    ui->forward->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
+    ui->stop->setIcon(QApplication::style()->standardIcon(QStyle::SP_BrowserStop));
+    ui->reload->setIcon(QApplication::style()->standardIcon(QStyle::SP_BrowserReload));
+    ui->zoominus->setMinimumWidth(25);
+    ui->zoomplus->setMinimumWidth(25);
+
+    on_home_clicked();
 }
 
 Form::~Form()

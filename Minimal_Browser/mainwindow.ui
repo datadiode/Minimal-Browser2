@@ -44,7 +44,7 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
- <layoutdefault spacing="6" margin="11"/>
+ <layoutdefault spacing="0" margin="0"/>
  <resources/>
  <connections/>
 </ui>
