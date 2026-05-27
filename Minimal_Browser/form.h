@@ -22,7 +22,6 @@ private slots:
     void on_reload_clicked();
     void on_print_clicked();
     void on_stop_clicked();
-    void on_download_clicked();
     void on_zoomplus_clicked();
     void on_zoominus_clicked();
     void on_home_clicked();

@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+class QWebEngineDownloadRequest;
+
 namespace Ui {
 class MainWindow;
 }
@@ -16,10 +18,9 @@ public:
     ~MainWindow();
 
 private slots:
-
     void on_tabWidget_tabCloseRequested(int index);
-
     void on_tabWidget_tabBarDoubleClicked();
+    void downloadRequested(QWebEngineDownloadRequest* download);
 
 private:
     Ui::MainWindow *ui;

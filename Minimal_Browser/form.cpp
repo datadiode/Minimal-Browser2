@@ -33,6 +33,7 @@ Form::Form(QWidget *parent) :
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows,true);
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
 
+    //GUI tweaks
     ui->back->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
     ui->forward->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
     ui->stop->setIcon(QApplication::style()->standardIcon(QStyle::SP_BrowserStop));
@@ -97,29 +98,6 @@ void Form::on_print_clicked()
 void Form::on_stop_clicked()
 {
     ui->webView->stop();
-}
-
-void Form::on_download_clicked()
-{
-    QFileDialog dialog(this);
-    dialog.setViewMode(QFileDialog::Detail);
-    dialog.setAttribute(Qt::WA_DeleteOnClose);
-    QString urls= ui->webView->url().toString();
-    QString filename;
-    filename = QFileDialog::getSaveFileName(this, tr("Save File"),
-                                            "",
-                                            tr("All files (*"));
-
-    QString getme=ui->webView->url().toString();
-    QProcess proc;
-    QStringList args;
-    args << getme;
-    args << "-O";
-    args << filename;
-
-    proc.start("wget", args);
-    proc.waitForFinished();
-    qDebug() << proc.readAllStandardOutput();
 }
 
 void Form::on_zoomplus_clicked()

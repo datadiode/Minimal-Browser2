@@ -17,7 +17,7 @@
    <string notr="true"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0" colspan="10">
+   <item row="1" column="0" colspan="9">
     <widget class="QWebEngineView" name="webView">
      <property name="url">
       <url>
@@ -95,16 +95,6 @@
     </widget>
    </item>
    <item row="0" column="8">
-    <widget class="QPushButton" name="download">
-     <property name="cssClass" stdset="0">
-      <string notr="true">clickme</string>
-     </property>
-     <property name="text">
-      <string>Download</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="9">
     <widget class="QPushButton" name="home">
      <property name="cssClass" stdset="0">
       <string notr="true">clickme</string>
