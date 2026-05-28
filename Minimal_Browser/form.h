@@ -26,7 +26,8 @@ private slots:
     void on_zoomplus_clicked();
     void on_zoominus_clicked();
     void on_home_clicked();
-    void on_webView_loadFinished(bool arg1);
+    void on_webView_loadStarted();
+    void on_webView_loadFinished(bool ok);
     void onCertificateError(QWebEngineCertificateError certificateError);
 
 private:

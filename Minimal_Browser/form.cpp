@@ -116,9 +116,15 @@ void Form::on_home_clicked()
     ui->addressbar->setText(ui->webView->url().toString());
 }
 
-void Form::on_webView_loadFinished(bool arg1)
+void Form::on_webView_loadStarted()
 {
-    if (arg1)
+    ui->stop->setDisabled(false);
+}
+
+void Form::on_webView_loadFinished(bool ok)
+{
+    ui->stop->setDisabled(true);
+    if (ok)
     {
         ui->addressbar->setText(ui->webView->url().toString());
     }
