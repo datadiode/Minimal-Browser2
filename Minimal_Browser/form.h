@@ -2,6 +2,7 @@
 #define FORM_H
 
 #include <QWidget>
+#include <QWebEngineCertificateError>
 
 namespace Ui {
 class Form;
@@ -26,6 +27,7 @@ private slots:
     void on_zoominus_clicked();
     void on_home_clicked();
     void on_webView_loadFinished(bool arg1);
+    void onCertificateError(QWebEngineCertificateError certificateError);
 
 private:
     Ui::Form *ui;

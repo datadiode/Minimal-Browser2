@@ -16,7 +16,9 @@ static const char styleSheet[] = HEREDOC
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
+    QCoreApplication::setOrganizationName("datadiode");
+    QCoreApplication::setApplicationName("Minimal Browser");
+    QCoreApplication::setApplicationVersion("2.5");
     a.setStyleSheet(styleSheet);
 
     MainWindow w;
