@@ -28,10 +28,14 @@ private slots:
     void on_home_clicked();
     void on_webView_loadStarted();
     void on_webView_loadFinished(bool ok);
+    void on_webView_iconChanged(const QIcon &icon);
     void onCertificateError(QWebEngineCertificateError certificateError);
+    void onCertificateStatusTriggered();
 
 private:
     Ui::Form *ui;
+    QAction *certificateStatus;
+    QAction *pageIcon;
 };
 
 #endif // FORM_H

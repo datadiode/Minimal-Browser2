@@ -1,19 +1,18 @@
 #include "form.h"
 #include "ui_form.h"
 #include <QFileDialog>
-#include <QKeyEvent>
 #include <QString>
 #include <QWebEngineView>
 #include <QWebEnginePage>
+#include <QWebEngineProfile>
 #include <QWebEngineSettings>
+#include <QWebEngineHistory>
 #include <QtWidgets>
 #include <QUrl>
 #include <QtPrintSupport>
 #include <QPrintDialog>
 #include <QPrinter>
 #include <QPageLayout>
-#include <QCoreApplication>
-#include <QProcess>
 
 Form::Form(QWidget *parent) :
     QWidget(parent),
@@ -41,6 +40,13 @@ Form::Form(QWidget *parent) :
     ui->zoominus->setMinimumWidth(25);
     ui->zoomplus->setMinimumWidth(25);
 
+    //Certificate status indicator
+    certificateStatus = ui->addressbar->addAction(QApplication::style()->standardIcon(QStyle::SP_VistaShield), QLineEdit::LeadingPosition);
+    connect(certificateStatus, &QAction::triggered, this, &Form::onCertificateStatusTriggered);
+
+    //Page icon
+    pageIcon = ui->addressbar->addAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), QLineEdit::LeadingPosition);
+
     connect(ui->webView->page(), &QWebEnginePage::certificateError, this, &Form::onCertificateError);
 
     on_home_clicked();
@@ -55,7 +61,6 @@ void Form::on_addressbar_returnPressed()
 {
     QUrl url = ui->addressbar->text();
     QString part = url.scheme();
-    url.setScheme("https");
     if (part == "search")
     {
         url.setHost("duckduckgo.com");
@@ -64,6 +69,11 @@ void Form::on_addressbar_returnPressed()
         QUrlQuery query;
         query.addQueryItem("q", part);
         url.setQuery(query);
+        part.clear();
+    }
+    if (part.isEmpty())
+    {
+        url.setScheme("https");
     }
     ui->webView->load(url);
 }
@@ -78,7 +88,6 @@ void Form::on_forward_clicked()
 {
     ui->webView->forward();
     ui->addressbar->setText(ui->webView->url().toString());
-
 }
 
 void Form::on_reload_clicked()
@@ -119,15 +128,36 @@ void Form::on_home_clicked()
 void Form::on_webView_loadStarted()
 {
     ui->stop->setDisabled(false);
+    certificateStatus->setEnabled(false);
+    certificateStatus->setIcon(QApplication::style()->standardIcon(QStyle::SP_VistaShield));
 }
 
 void Form::on_webView_loadFinished(bool ok)
 {
     ui->stop->setDisabled(true);
+    ui->back->setDisabled(!ui->webView->history()->canGoBack());
+    ui->forward->setDisabled(!ui->webView->history()->canGoForward());
     if (ok)
     {
-        ui->addressbar->setText(ui->webView->url().toString());
+        QUrl const url = ui->webView->url();
+        QString const host = url.host();
+        ui->addressbar->setText(url.toString());
+        QSettings settings;
+        settings.beginGroup(QLatin1String("knownhosts"));
+        if (url.scheme() == "https")
+        {
+            certificateStatus->setEnabled(true);
+            if (settings.contains(host))
+            {
+                certificateStatus->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxWarning));
+            }
+        }
     }
+}
+
+void Form::on_webView_iconChanged(const QIcon &icon)
+{
+    pageIcon->setIcon(icon.isNull() ? QApplication::style()->standardIcon(QStyle::SP_FileIcon) : icon);
 }
 
 void Form::onCertificateError(QWebEngineCertificateError certificateError)
@@ -137,15 +167,15 @@ void Form::onCertificateError(QWebEngineCertificateError certificateError)
     QSettings settings;
     settings.beginGroup(QLatin1String("knownhosts"));
 
-    QList<QSslCertificate> ca_mrg = QSslCertificate::fromData(settings.value(host).toByteArray());
-    QList<QSslCertificate> ca_new = certificateError.certificateChain();
+    QList<QSslCertificate> known = QSslCertificate::fromData(settings.value(host).toByteArray());
+    QList<QSslCertificate> chain = certificateError.certificateChain();
     QString detailedText;
-    for (int i = 0; i < ca_new.count(); ++i)
+    for (int i = 0; i < chain.count(); ++i)
     {
-        QSslCertificate const cert = ca_new.at(i);
-        if (!cert.isNull() && !ca_mrg.contains(cert))
+        QSslCertificate const cert = chain.at(i);
+        if (!cert.isNull() && !known.contains(cert))
         {
-            ca_mrg.append(cert);
+            known.append(cert);
             detailedText += QLatin1String("Thumbprint: ");
             detailedText += cert.digest(QCryptographicHash::Sha1).toHex().toUpper();
             detailedText += QLatin1String("\n");
@@ -185,6 +215,7 @@ void Form::onCertificateError(QWebEngineCertificateError certificateError)
         );
     }
     msgbox.setInformativeText(tr("Do you want to ignore the error?"));
+
     QRect rect = msgbox.geometry();
     rect.moveTopLeft
     (
@@ -196,19 +227,30 @@ void Form::onCertificateError(QWebEngineCertificateError certificateError)
         )
     );
     msgbox.setGeometry(rect);
-    int const ret = msgbox.exec();
-    if (ret == QMessageBox::Yes)
+
+    if (msgbox.exec() == QMessageBox::Yes)
     {
-        if (ca_new.count() > 0)
+        QByteArray pems;
+        if (msgbox.checkBox()->isChecked())
         {
-            if (msgbox.checkBox()->isChecked())
-            {
-                QByteArray pems;
-                for (int i = 0; i < ca_mrg.count(); ++i)
-                    pems += ca_mrg.at(i).toPem() + '\n';
-                settings.setValue(host, pems);
-            }
+            for (int i = 0; i < known.count(); ++i)
+                pems += known.at(i).toPem() + '\n';
         }
+        settings.setValue(host, pems);
         certificateError.acceptCertificate();
+    }
+}
+
+void Form::onCertificateStatusTriggered()
+{
+    QString const host = ui->webView->url().host();
+
+    QSettings settings;
+    settings.beginGroup(QLatin1String("knownhosts"));
+
+    if (settings.contains(host) &&
+        QMessageBox::question(this, host, tr("Do you want to forget the stored certificate for this host?")) == QMessageBox::Yes)
+    {
+        settings.setValue(host, QByteArray());
     }
 }
