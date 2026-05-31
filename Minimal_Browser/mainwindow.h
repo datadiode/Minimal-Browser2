@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 class QWebEngineDownloadRequest;
+class QStandardItemModel;
 
 namespace Ui {
 class MainWindow;
@@ -23,8 +24,8 @@ private slots:
     void downloadRequested(QWebEngineDownloadRequest* download);
 
 private:
-    Ui::MainWindow *ui;
-
+    QStandardItemModel *const model;
+    Ui::MainWindow *const ui;
 };
 
 #endif // MAINWINDOW_H

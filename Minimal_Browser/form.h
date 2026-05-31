@@ -8,12 +8,14 @@ namespace Ui {
 class Form;
 }
 
+class QStandardItemModel;
+
 class Form : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit Form(QWidget *parent = nullptr);
+    explicit Form(QStandardItemModel *model, QWidget *parent = nullptr);
     ~Form();
 
 private slots:
@@ -33,7 +35,7 @@ private slots:
     void onCertificateStatusTriggered();
 
 private:
-    Ui::Form *ui;
+    Ui::Form *const ui;
     QAction *certificateStatus;
     QAction *pageIcon;
 };

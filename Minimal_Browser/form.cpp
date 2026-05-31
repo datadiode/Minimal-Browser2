@@ -14,7 +14,7 @@
 #include <QPrinter>
 #include <QPageLayout>
 
-Form::Form(QWidget *parent) :
+Form::Form(QStandardItemModel *model, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Form)
 {
@@ -42,7 +42,7 @@ Form::Form(QWidget *parent) :
     ui->addressbar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     ui->addressbar->lineEdit()->setPlaceholderText(tr("Enter an address"));
     ui->addressbar->lineEdit()->setClearButtonEnabled(true);
-    ui->addressbar->addItem("https://duckduckgo.com/");
+    ui->addressbar->setModel(model);
 
     //Certificate status indicator
     certificateStatus = ui->addressbar->lineEdit()->addAction(QApplication::style()->standardIcon(QStyle::SP_VistaShield), QLineEdit::LeadingPosition);
@@ -63,6 +63,12 @@ Form::~Form()
 
 void Form::on_addressbar_textActivated(const QString &text)
 {
+    QModelIndex index = ui->addressbar->view()->currentIndex();
+    QStandardItemModel *model = qobject_cast<QStandardItemModel*>(ui->addressbar->model());
+    QStandardItem *item = model->itemFromIndex(index);
+    item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+    item->setCheckState(item->checkState());
+
     QUrl url = text;
     QString part = url.scheme();
     if (part == "search")
@@ -78,6 +84,12 @@ void Form::on_addressbar_textActivated(const QString &text)
     if (part.isEmpty())
     {
         url.setScheme("https");
+    }
+    part = url.host();
+    if (part.isEmpty())
+    {
+        url.setHost(text);
+        url.setPath("/");
     }
     ui->addressbar->setItemText(ui->addressbar->currentIndex(), url.toString());
     ui->webView->load(url);
@@ -126,8 +138,8 @@ void Form::on_zoominus_clicked()
 
 void Form::on_home_clicked()
 {
-    ui->webView->load(QUrl("https://duckduckgo.com/"));
-    ui->addressbar->setEditText(ui->webView->url().toString());
+    ui->addressbar->setCurrentIndex(0);
+    ui->webView->load(ui->addressbar->currentText());
 }
 
 void Form::on_webView_loadStarted()
