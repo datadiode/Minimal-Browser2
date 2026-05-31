@@ -17,7 +17,7 @@ public:
     ~Form();
 
 private slots:
-    void on_addressbar_returnPressed();
+    void on_addressbar_textActivated(const QString &text);
     void on_back_clicked();
     void on_forward_clicked();
     void on_reload_clicked();

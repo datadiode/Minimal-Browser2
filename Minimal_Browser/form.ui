@@ -55,12 +55,12 @@
     </widget>
    </item>
    <item row="0" column="4">
-    <widget class="QLineEdit" name="addressbar">
+    <widget class="QComboBox" name="addressbar">
      <property name="cssClass" stdset="0">
       <string notr="true">feedme</string>
      </property>
-     <property name="placeholderText">
-      <string>Enter an address</string>
+     <property name="editable">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

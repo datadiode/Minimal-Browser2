@@ -39,13 +39,17 @@ Form::Form(QWidget *parent) :
     ui->reload->setIcon(QApplication::style()->standardIcon(QStyle::SP_BrowserReload));
     ui->zoominus->setMinimumWidth(25);
     ui->zoomplus->setMinimumWidth(25);
+    ui->addressbar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    ui->addressbar->lineEdit()->setPlaceholderText(tr("Enter an address"));
+    ui->addressbar->lineEdit()->setClearButtonEnabled(true);
+    ui->addressbar->addItem("https://duckduckgo.com/");
 
     //Certificate status indicator
-    certificateStatus = ui->addressbar->addAction(QApplication::style()->standardIcon(QStyle::SP_VistaShield), QLineEdit::LeadingPosition);
+    certificateStatus = ui->addressbar->lineEdit()->addAction(QApplication::style()->standardIcon(QStyle::SP_VistaShield), QLineEdit::LeadingPosition);
     connect(certificateStatus, &QAction::triggered, this, &Form::onCertificateStatusTriggered);
 
     //Page icon
-    pageIcon = ui->addressbar->addAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), QLineEdit::LeadingPosition);
+    pageIcon = ui->addressbar->lineEdit()->addAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), QLineEdit::LeadingPosition);
 
     connect(ui->webView->page(), &QWebEnginePage::certificateError, this, &Form::onCertificateError);
 
@@ -57,9 +61,9 @@ Form::~Form()
     delete ui;
 }
 
-void Form::on_addressbar_returnPressed()
+void Form::on_addressbar_textActivated(const QString &text)
 {
-    QUrl url = ui->addressbar->text();
+    QUrl url = text;
     QString part = url.scheme();
     if (part == "search")
     {
@@ -75,25 +79,26 @@ void Form::on_addressbar_returnPressed()
     {
         url.setScheme("https");
     }
+    ui->addressbar->setItemText(ui->addressbar->currentIndex(), url.toString());
     ui->webView->load(url);
 }
 
 void Form::on_back_clicked()
 {
     ui->webView->back();
-    ui->addressbar->setText(ui->webView->url().toString());
+    ui->addressbar->setEditText(ui->webView->url().toString());
 }
 
 void Form::on_forward_clicked()
 {
     ui->webView->forward();
-    ui->addressbar->setText(ui->webView->url().toString());
+    ui->addressbar->setEditText(ui->webView->url().toString());
 }
 
 void Form::on_reload_clicked()
 {
     ui->webView->reload();
-    ui->addressbar->setText(ui->webView->url().toString());
+    ui->addressbar->setEditText(ui->webView->url().toString());
 }
 
 void Form::on_print_clicked()
@@ -122,7 +127,7 @@ void Form::on_zoominus_clicked()
 void Form::on_home_clicked()
 {
     ui->webView->load(QUrl("https://duckduckgo.com/"));
-    ui->addressbar->setText(ui->webView->url().toString());
+    ui->addressbar->setEditText(ui->webView->url().toString());
 }
 
 void Form::on_webView_loadStarted()
@@ -141,7 +146,7 @@ void Form::on_webView_loadFinished(bool ok)
     {
         QUrl const url = ui->webView->url();
         QString const host = url.host();
-        ui->addressbar->setText(url.toString());
+        ui->addressbar->setEditText(url.toString());
         QSettings settings;
         settings.beginGroup(QLatin1String("knownhosts"));
         if (url.scheme() == "https")
