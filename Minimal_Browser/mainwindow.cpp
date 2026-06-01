@@ -35,8 +35,8 @@ MainWindow::MainWindow(QWidget *parent) :
     checked.insert(0, "https://duckduckgo.com/");
     for (int i = 0, n = checked.count(); i < n; ++i)
     {
-        QStandardItem *item = new QStandardItem(checked.at(i));
-        item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        QStandardItem *const item = new QStandardItem(checked.at(i));
+        item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
         item->setCheckState(Qt::Checked);
         model->insertRow(i, item);
     }
@@ -50,7 +50,7 @@ MainWindow::~MainWindow()
     QStringList checked;
     for (int i = 0, n = model->rowCount(); i < n; ++i)
     {
-        QStandardItem *item = model->item(i);
+        QStandardItem *const item = model->item(i);
         if (item->checkState() == Qt::Checked)
         {
             checked.append(item->text());
@@ -72,15 +72,16 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index)
 
 void MainWindow::on_tabWidget_tabBarDoubleClicked()
 {
-    ui->tabWidget->addTab(new Form(model), QString("Tab %0").arg(ui->tabWidget->count() + 1));
-    ui->tabWidget->setCurrentIndex(ui->tabWidget->count() -1);
+    QString const title = QString("Tab %0").arg(ui->tabWidget->count() + 1);
+    int const index = ui->tabWidget->addTab(new Form(model), title);
+    ui->tabWidget->setCurrentIndex(index);
 }
 
-void MainWindow::downloadRequested(QWebEngineDownloadRequest* download)
+void MainWindow::downloadRequested(QWebEngineDownloadRequest *download)
 {
-    QDir downloadDir = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    QString fileName = download->suggestedFileName();
-    QString filePath = QFileDialog::getSaveFileName(this, tr("Save File"), downloadDir.filePath(fileName));
+    QDir const downloadDir = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    QString const fileName = download->suggestedFileName();
+    QString const filePath = QFileDialog::getSaveFileName(this, tr("Save File"), downloadDir.filePath(fileName));
     if (!filePath.isEmpty())
     {
         download->setDownloadFileName(filePath);

@@ -14,13 +14,28 @@
 #include <QPrinter>
 #include <QPageLayout>
 
+class Form::ItemDelegate : public QStyledItemDelegate
+{
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override
+    {
+        QAbstractItemView *const view = qobject_cast<QComboBox*>(parent())->view();
+        // Use the alternate base color for the selected item to restore the visual feedback of selection which was lost when making the items click-checkable
+        painter->fillRect(option.rect, QGuiApplication::palette().brush(
+            view->currentIndex() == index ? QPalette::AlternateBase : QPalette::Base));
+        QStyledItemDelegate::paint(painter, option, index);
+    }
+};
+
 Form::Form(QStandardItemModel *model, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Form)
 {
     ui->setupUi(this);
 
-    //Settings
+    // Settings
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::JavascriptEnabled, true);
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::SpatialNavigationEnabled, true);
@@ -32,7 +47,7 @@ Form::Form(QStandardItemModel *model, QWidget *parent) :
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, true);
     ui->webView->page()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
 
-    //GUI tweaks
+    // GUI tweaks
     ui->back->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack));
     ui->forward->setIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowForward));
     ui->stop->setIcon(QApplication::style()->standardIcon(QStyle::SP_BrowserStop));
@@ -44,11 +59,15 @@ Form::Form(QStandardItemModel *model, QWidget *parent) :
     ui->addressbar->lineEdit()->setClearButtonEnabled(true);
     ui->addressbar->setModel(model);
 
-    //Certificate status indicator
+    // Restore item selectability which was sacrificed to make the items click-checkable
+    connect(ui->addressbar->view(), &QAbstractItemView::pressed, this, &Form::onItemPressed);
+    ui->addressbar->setItemDelegate(new ItemDelegate(ui->addressbar));
+
+    // Certificate status indicator
     certificateStatus = ui->addressbar->lineEdit()->addAction(QApplication::style()->standardIcon(QStyle::SP_VistaShield), QLineEdit::LeadingPosition);
     connect(certificateStatus, &QAction::triggered, this, &Form::onCertificateStatusTriggered);
 
-    //Page icon
+    // Page icon
     pageIcon = ui->addressbar->lineEdit()->addAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), QLineEdit::LeadingPosition);
 
     connect(ui->webView->page(), &QWebEnginePage::certificateError, this, &Form::onCertificateError);
@@ -63,11 +82,13 @@ Form::~Form()
 
 void Form::on_addressbar_textActivated(const QString &text)
 {
-    QModelIndex index = ui->addressbar->view()->currentIndex();
-    QStandardItemModel *model = qobject_cast<QStandardItemModel*>(ui->addressbar->model());
-    QStandardItem *item = model->itemFromIndex(index);
-    item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-    item->setCheckState(item->checkState());
+    QModelIndex const index = ui->addressbar->view()->currentIndex();
+    QStandardItemModel *const model = qobject_cast<QStandardItemModel*>(ui->addressbar->model());
+    if (QStandardItem *const item = model->itemFromIndex(index))
+    {
+        item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+        item->setCheckState(item->checkState());
+    }
 
     QUrl url = text;
     QString part = url.scheme();
@@ -160,7 +181,7 @@ void Form::on_webView_loadFinished(bool ok)
         QString const host = url.host();
         ui->addressbar->setEditText(url.toString());
         QSettings settings;
-        settings.beginGroup(QLatin1String("knownhosts"));
+        settings.beginGroup("knownhosts");
         if (url.scheme() == "https")
         {
             certificateStatus->setEnabled(true);
@@ -182,10 +203,10 @@ void Form::onCertificateError(QWebEngineCertificateError certificateError)
     QString const host = certificateError.url().host();
 
     QSettings settings;
-    settings.beginGroup(QLatin1String("knownhosts"));
+    settings.beginGroup("knownhosts");
 
     QList<QSslCertificate> known = QSslCertificate::fromData(settings.value(host).toByteArray());
-    QList<QSslCertificate> chain = certificateError.certificateChain();
+    QList<QSslCertificate> const chain = certificateError.certificateChain();
     QString detailedText;
     for (int i = 0; i < chain.count(); ++i)
     {
@@ -193,11 +214,11 @@ void Form::onCertificateError(QWebEngineCertificateError certificateError)
         if (!cert.isNull() && !known.contains(cert))
         {
             known.append(cert);
-            detailedText += QLatin1String("Thumbprint: ");
-            detailedText += cert.digest(QCryptographicHash::Sha1).toHex().toUpper();
-            detailedText += QLatin1String("\n");
-            detailedText += cert.toText();
-            detailedText += QLatin1String("\n");
+            detailedText.append("Thumbprint: ");
+            detailedText.append(cert.digest(QCryptographicHash::Sha1).toHex().toUpper());
+            detailedText.append("\n");
+            detailedText.append(cert.toText());
+            detailedText.append("\n");
         }
     }
 
@@ -263,11 +284,22 @@ void Form::onCertificateStatusTriggered()
     QString const host = ui->webView->url().host();
 
     QSettings settings;
-    settings.beginGroup(QLatin1String("knownhosts"));
+    settings.beginGroup("knownhosts");
 
     if (settings.contains(host) &&
         QMessageBox::question(this, host, tr("Do you want to forget the stored certificate for this host?")) == QMessageBox::Yes)
     {
         settings.setValue(host, QByteArray());
+    }
+}
+
+void Form::onItemPressed(const QModelIndex& index)
+{
+    QStandardItemModel *const model = qobject_cast<QStandardItemModel*>(ui->addressbar->model());
+    if (QStandardItem *const item = model->itemFromIndex(index))
+    {
+        ui->addressbar->hidePopup();
+        ui->addressbar->setCurrentIndex(item->row());
+        emit ui->addressbar->textActivated(ui->addressbar->currentText());
     }
 }

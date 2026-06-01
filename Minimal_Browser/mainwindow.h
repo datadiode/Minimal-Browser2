@@ -21,7 +21,7 @@ public:
 private slots:
     void on_tabWidget_tabCloseRequested(int index);
     void on_tabWidget_tabBarDoubleClicked();
-    void downloadRequested(QWebEngineDownloadRequest* download);
+    void downloadRequested(QWebEngineDownloadRequest *download);
 
 private:
     QStandardItemModel *const model;

@@ -33,8 +33,11 @@ private slots:
     void on_webView_iconChanged(const QIcon &icon);
     void onCertificateError(QWebEngineCertificateError certificateError);
     void onCertificateStatusTriggered();
+    void onItemPressed(const QModelIndex &index);
 
 private:
+    class ItemDelegate;
+
     Ui::Form *const ui;
     QAction *certificateStatus;
     QAction *pageIcon;
