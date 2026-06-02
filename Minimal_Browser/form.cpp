@@ -205,15 +205,16 @@ void Form::onCertificateError(QWebEngineCertificateError certificateError)
     QSettings settings;
     settings.beginGroup("knownhosts");
 
-    QList<QSslCertificate> known = QSslCertificate::fromData(settings.value(host).toByteArray());
+    QStringList known = settings.value(host).value<QStringList>();
     QList<QSslCertificate> const chain = certificateError.certificateChain();
     QString detailedText;
     for (int i = 0; i < chain.count(); ++i)
     {
         QSslCertificate const cert = chain.at(i);
-        if (!cert.isNull() && !known.contains(cert))
+        QString const pem = cert.toPem();
+        if (!known.contains(pem))
         {
-            known.append(cert);
+            known.append(pem);
             detailedText.append("Thumbprint: ");
             detailedText.append(cert.digest(QCryptographicHash::Sha1).toHex().toUpper());
             detailedText.append("\n");
@@ -268,13 +269,7 @@ void Form::onCertificateError(QWebEngineCertificateError certificateError)
 
     if (msgbox.exec() == QMessageBox::Yes)
     {
-        QByteArray pems;
-        if (msgbox.checkBox()->isChecked())
-        {
-            for (int i = 0; i < known.count(); ++i)
-                pems += known.at(i).toPem() + '\n';
-        }
-        settings.setValue(host, pems);
+        settings.setValue(host, QVariant::fromValue(known));
         certificateError.acceptCertificate();
     }
 }
